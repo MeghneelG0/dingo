@@ -512,3 +512,49 @@ void HPolytopeCPP::apply_rounding(int rounding_method, double* new_A, double* ne
 
 }
 //////////         End of "rounding()"          //////////
+
+
+
+
+
+
+
+VPolytopeCPP::VPolytopeCPP() {}
+
+VPolytopeCPP::VPolytopeCPP(double *vertices, int n_vertices, int dimension) {
+    MT V;
+    V.resize(n_vertices, dimension);
+
+    int index = 0;
+    for (int i = 0; i < n_vertices; i++) {
+        for (int j = 0; j < dimension; j++) {
+            V(i, j) = vertices[index];
+            index++;
+        }
+    }
+
+    VP = Vpolytope(dimension, V);
+}
+
+// Destructor for VPolytopeCPP
+VPolytopeCPP::~VPolytopeCPP() {}
+
+// compute_volume() function for VPolytopeCPP
+double VPolytopeCPP::compute_volume(char* vol_method, int walk_len, double epsilon, int seed) const {
+    double volume;
+
+    if (strcmp(vol_method, "sequence_of_balls") == 0) {
+        volume = volume_sequence_of_balls<BallWalk, RNGType>(VP, epsilon, walk_len);
+    } 
+    else if (strcmp(vol_method, "cooling_gaussian") == 0) {
+        volume = volume_cooling_gaussians<GaussianBallWalk, RNGType>(VP, epsilon, walk_len);
+    } 
+    else if (strcmp(vol_method, "cooling_balls") == 0) {
+        volume = volume_cooling_balls<BallWalk, RNGType>(VP, epsilon, walk_len).second;
+    } 
+    else {
+        throw std::invalid_argument("Invalid volume computation method for VPolytope.");
+    }
+
+    return volume;
+}

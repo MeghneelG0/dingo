@@ -43,10 +43,17 @@
 typedef double NT;
 typedef Cartesian<NT>    Kernel;
 typedef typename Kernel::Point    Point;
+
+// H-Polytope definitions
 typedef HPolytope<Point> Hpolytope;
 typedef typename Hpolytope::MT    MT;
 typedef typename Hpolytope::VT    VT;
 typedef BoostRandomNumberGenerator<boost::mt19937, double>    RNGType;
+
+// **V-Polytope Definitions**
+typedef VPolytope<Point> Vpolytope;
+typedef typename Vpolytope::MT VMT;
+typedef typename Vpolytope::VT VVT;
 
 
 template <typename NT, typename MT, typename VT>
@@ -156,6 +163,21 @@ class HPolytopeCPP{
                           double* shift, double &round_value, double* inner_point, double radius);
 
 };
+
+class VPolytopeCPP{
+
+   public:
+
+      VPolytopeCPP();
+      VPolytopeCPP(double *vertices, int n_vertices, int dimension);
+
+      Vpolytope VP;
+
+      ~VPolytopeCPP();
+
+      double compute_volume(char* vol_method, int walk_len, double epsilon, int seed) const;
+
+}
 
 
 #endif

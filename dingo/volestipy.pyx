@@ -82,6 +82,16 @@ cdef extern from "bindings.h":
       # Get full dimensional polytope
       int full_dimensiolal_polytope(double* N_extra_trans, double* shift, double* A_full_extra_trans, double* b_full)
 
+   # The VPolytopeCPP class along with its functions
+   cdef cppclass VPolytopeCPP:
+
+      # Initialization
+      VPolytopeCPP() except +
+      VPolytopeCPP(double *vertices, int n_vertices, int dimension) except +
+
+      # Compute volume
+      double compute_volume(char* vol_method, int walk_len, double epsilon, int seed);
+
 # Lists with the methods supported by volesti for volume approximation and random walk
 volume_methods = ["sequence_of_balls".encode("UTF-8"), "cooling_gaussian".encode("UTF-8"), "cooling_balls".encode("UTF-8")]
 walk_methods = ["uniform_ball".encode("UTF-8"), "CDHR".encode("UTF-8"), "RDHR".encode("UTF-8"), "gaussian_ball".encode("UTF-8"), \
@@ -215,3 +225,27 @@ cdef class HPolytope:
 
    def dimension(self):
       return self._A.shape[1]
+
+
+# Build the VPolytope class
+cdef class VPolytope:
+
+    cdef VPolytopeCPP polytope_cpp
+    cdef double[:,::1] _V
+
+    # Constructor
+    def __cinit__(self, double[:,::1] V):
+        self._V = V
+        n_vertices, dimension = V.shape[0], V.shape[1]
+        self.polytope_cpp = VPolytopeCPP(&V[0,0], n_vertices, dimension)
+
+    # Compute volume function
+    def compute_volume(self, walk_len=2, epsilon=0.05, vol_method="sequence_of_balls", np.npy_int32 seed=get_time_seed()):
+        vol_method = vol_method.encode("UTF-8")
+
+        if vol_method in volume_methods:
+            return self.polytope_cpp.compute_volume(vol_method, walk_len, epsilon, seed)
+        else:
+            raise Exception(f'"{vol_method}" is not a valid volume computation method. Available methods are: {volume_methods}')
+
+
