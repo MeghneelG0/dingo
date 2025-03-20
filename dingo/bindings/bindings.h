@@ -15,7 +15,7 @@
 
 #define DISABLE_NLP_ORACLES
 #include <cmath>
-// from SOB volume - exactly the same for CG and CB methods
+// from SOB volume - exactly the same for CG  (cooling_gaussian) and CB (cooling_balls) methods
 #include <fstream>
 #include <iostream>
 #include "random_walks.hpp"
@@ -43,9 +43,14 @@
 typedef double NT;
 typedef Cartesian<NT>    Kernel;
 typedef typename Kernel::Point    Point;
+// H-Polytope 
 typedef HPolytope<Point> Hpolytope;
 typedef typename Hpolytope::MT    MT;
 typedef typename Hpolytope::VT    VT;
+
+// V-Polytope 
+typedef VPolytope<Point> Vpolytope;
+
 typedef BoostRandomNumberGenerator<boost::mt19937, double>    RNGType;
 
 
@@ -115,6 +120,9 @@ public:
 
 
 // This is the HPolytopeCPP class; the main volesti class that is running the compute_volume(), rounding() and sampling() methods
+//////////////////////////////
+// HPolytopeCPP class
+//////////////////////////////
 class HPolytopeCPP{
 
    public:
@@ -157,5 +165,27 @@ class HPolytopeCPP{
 
 };
 
+//////////////////////////////
+// VPolytopeCPP class 
+//////////////////////////////
+class VPolytopeCPP {
+   
+   public:
+       std::pair<Point,NT> CheBall;
+   
+       // Constructors and destructor
+       VPolytopeCPP();
+       VPolytopeCPP(double *V_np, int n_vertices, int n_variables);
+       ~VPolytopeCPP();
+   
+       Vpolytope VP;
+
+       double compute_volume(char* vol_method, char* walk_method, int walk_len, double epsilon, int seed) const;
+   
+       // Sampling method (not implemented here; will throw an exception).
+       double apply_sampling(int walk_len, int number_of_points, int number_of_points_to_burn,
+                             char* method, double* inner_point, double radius, double* samples,
+                             double variance_value, double* bias_vector, int ess);
+};
 
 #endif

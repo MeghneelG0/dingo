@@ -47,7 +47,7 @@ HPolytopeCPP::~HPolytopeCPP(){}
 double HPolytopeCPP::compute_volume(char* vol_method, char* walk_method,
                                     int walk_len, double epsilon, int seed) const {
 
-   double volume;
+   double volume = 0.0;
 
    if (strcmp(vol_method,"sequence_of_balls") == 0){
       if (strcmp(walk_method,"uniform_ball") == 0){
@@ -511,4 +511,80 @@ void HPolytopeCPP::apply_rounding(int rounding_method, double* new_A, double* ne
    round_value = get<2>(round_res);
 
 }
+
+// Default constructor
+VPolytopeCPP::VPolytopeCPP() {}
+
+// Constructor: builds the V-polytope from a flattened array of vertices.
+VPolytopeCPP::VPolytopeCPP(double *V_np, int n_vertices, int n_variables) {
+    MT V_matrix;
+    VT b_vector;
+    
+    V_matrix.resize(n_vertices, n_variables);
+    b_vector.resize(n_vertices);
+    
+    // Initialize b_vector to ones (default)
+    for (int i = 0; i < n_vertices; i++) {
+        b_vector(i) = 1.0;
+    }
+    int index = 0;
+    for (int i = 0; i < n_vertices; i++) {
+        for (int j = 0; j < n_variables; j++) {
+            V_matrix(i, j) = V_np[index++];
+        }
+    }
+    
+    // Construct the V-polytope; note the first argument is the dimension.
+    VP = Vpolytope(n_variables, V_matrix, b_vector);
+}
+
+// Destructor
+VPolytopeCPP::~VPolytopeCPP() {
+    // No explicit deletion needed if Vpolytope cleans up its own memory.
+}
+
+// Volume computation method.
+double VPolytopeCPP::compute_volume(char* vol_method, char* walk_method, 
+                                    int walk_len, double epsilon, int seed) const {
+    double volume = 0.0;
+    
+    if (strcmp(vol_method,"sequence_of_balls") == 0){
+      if (strcmp(walk_method,"uniform_ball") == 0){
+         volume = volume_sequence_of_balls<BallWalk, RNGType>(VP, epsilon, walk_len);
+      } else if (strcmp(walk_method,"CDHR") == 0){
+         volume = volume_sequence_of_balls<CDHRWalk, RNGType>(VP, epsilon, walk_len);
+      } else if (strcmp(walk_method,"RDHR") == 0){
+         volume = volume_sequence_of_balls<RDHRWalk, RNGType>(VP, epsilon, walk_len);
+      }
+   }
+   else if (strcmp(vol_method,"cooling_gaussian") == 0){
+      if (strcmp(walk_method,"gaussian_ball") == 0){
+         volume = volume_cooling_gaussians<GaussianBallWalk, RNGType>(VP, epsilon, walk_len);
+      } else if (strcmp(walk_method,"gaussian_CDHR") == 0){
+         volume = volume_cooling_gaussians<GaussianCDHRWalk, RNGType>(VP, epsilon, walk_len);
+      } else if (strcmp(walk_method,"gaussian_RDHR") == 0){
+         volume = volume_cooling_gaussians<GaussianRDHRWalk, RNGType>(VP, epsilon, walk_len);
+      }
+   } else if (strcmp(vol_method,"cooling_balls") == 0){
+       if (strcmp(walk_method,"uniform_ball") == 0){
+         volume = volume_cooling_balls<BallWalk, RNGType>(VP, epsilon, walk_len).second;
+       } else if (strcmp(walk_method,"CDHR") == 0){
+         volume = volume_cooling_balls<CDHRWalk, RNGType>(VP, epsilon, walk_len).second;
+       } else if (strcmp(walk_method,"RDHR") == 0){
+         volume = volume_cooling_balls<RDHRWalk, RNGType>(VP, epsilon, walk_len).second;
+       } else if (strcmp(walk_method,"billiard") == 0){
+         volume = volume_cooling_balls<BilliardWalk, RNGType>(VP, epsilon, walk_len).second;
+       }
+   }
+   return volume;
+}
+
+// Sampling method (not implemented YET).
+double VPolytopeCPP::apply_sampling(int walk_len, int number_of_points, int number_of_points_to_burn,
+                                    char* method, double* inner_point, double radius, double* samples,
+                                    double variance_value, double* bias_vector, int ess) {
+    throw std::runtime_error("apply_sampling not implemented for VPolytopeCPP yet");
+}
+
+
 //////////         End of "rounding()"          //////////
