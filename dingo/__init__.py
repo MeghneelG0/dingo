@@ -29,7 +29,12 @@ from dingo.PolytopeSampler import PolytopeSampler
 
 from dingo.pyoptinterface_based_impl import fba, fva, inner_ball, remove_redundant_facets, set_default_solver
 
-from volestipy import HPolytope
+# Import classes from volestipy to make them available at the package level
+try:
+    from dingo.volestipy import SlidingWindow, HPolytope, VPolytope
+except ImportError as e:
+    import warnings
+    warnings.warn(f"Failed to import from volestipy: {e}")
 
 
 def get_name(args_network):

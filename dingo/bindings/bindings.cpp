@@ -18,6 +18,27 @@
 
 using namespace std;
 
+// SlidingWindow implementation
+SlidingWindowCPP::SlidingWindowCPP(int windowSize) {
+   window = new SlidingWindow<double>(windowSize);
+}
+
+void SlidingWindowCPP::push(double approximation) {
+   window->push(approximation);
+}
+
+double SlidingWindowCPP::getRelativeError() {
+   return window->getRelativeError();
+}
+
+int SlidingWindowCPP::size() {
+   return window->numEntries;
+}
+
+SlidingWindowCPP::~SlidingWindowCPP() {
+   delete window;
+}
+
 // >>> Main HPolytopeCPP class; compute_volume(), rounding() and generate_samples() volesti methods are included <<<
 
 // Here is the initialization of the HPolytopeCPP class

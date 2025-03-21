@@ -42,6 +42,13 @@ def get_time_seed():
 # Get classes from the bindings.h file
 cdef extern from "bindings.h":
 
+   # The SlidingWindowCPP class
+   cdef cppclass SlidingWindowCPP:
+      SlidingWindowCPP(int windowSize) except +
+      void push(double approximation)
+      double getRelativeError()
+      int size()
+
    # The HPolytopeCPP class along with its functions
    cdef cppclass HPolytopeCPP:
 
@@ -270,3 +277,69 @@ cdef class VPolytope:
             raise ValueError(f'"{walk_method}" is not a valid walk method. Available methods: {walk_methods}')
       else:
          raise ValueError(f'"{vol_method}" is not a valid volume method. Available methods: {volume_methods}')
+
+   def num_vertices(self):
+      """
+      Get the number of vertices of the V-polytope.
+      
+      Returns
+      -------
+      int
+          The number of vertices
+      """
+      return self._V.shape[0]
+
+cdef class SlidingWindow:
+   """A sliding window for tracking relative errors in approximations.
+    
+   This class maintains a window of recent approximations and computes
+   the relative error between the oldest and newest values.
+    
+   Parameters
+   ----------
+   window_size : int
+        The size of the sliding window.
+   """
+   cdef SlidingWindowCPP* _window
+
+   def __cinit__(self, int window_size):
+      """Initialize the sliding window with given size."""
+      self._window = new SlidingWindowCPP(window_size)
+
+   def __dealloc__(self):
+      """Clean up the C++ object."""
+      if self._window is not NULL:
+         del self._window
+
+   def push(self, double approximation):
+      """Add a new approximation to the window.
+        
+      Parameters
+      ----------
+      approximation : float
+         The new approximation value to add to the window.
+      """
+      self._window.push(approximation)
+
+   def get_relative_error(self):
+      """Get the relative error between oldest and newest values.
+      
+      Returns
+      -------
+      float
+         The relative error calculated as |newest - oldest| / |newest|.
+         This measures how far the oldest value is from the newest value,
+         relative to the newest value's magnitude.
+         Returns 1.0 if the window is not yet full.
+      """
+      return self._window.getRelativeError()
+        
+   def size(self):
+      """Get the current number of entries in the window.
+        
+      Returns
+      -------
+      int
+         The number of entries currently in the window.
+      """
+      return self._window.size()

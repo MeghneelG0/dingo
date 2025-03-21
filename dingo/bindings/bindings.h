@@ -29,6 +29,7 @@
 #include "sampling/mmcs.hpp"
 #include "sampling/parallel_mmcs.hpp"
 #include "diagnostics/univariate_psrf.hpp"
+#include "optimization/sliding_window.hpp"
 
 //from generate_samples, some extra headers not already included
 #include <chrono>
@@ -53,6 +54,17 @@ typedef VPolytope<Point> Vpolytope;
 
 typedef BoostRandomNumberGenerator<boost::mt19937, double>    RNGType;
 
+// SlidingWindow binding for error tracking and convergence detection
+class SlidingWindowCPP {
+private:
+    SlidingWindow<double>* window;
+public:
+    SlidingWindowCPP(int windowSize);
+    ~SlidingWindowCPP();
+    void push(double approximation);
+    double getRelativeError();
+    int size();
+};
 
 template <typename NT, typename MT, typename VT>
 struct mmcs_parameters
@@ -171,19 +183,19 @@ class HPolytopeCPP{
 class VPolytopeCPP {
    
    public:
-       std::pair<Point,NT> CheBall;
+      std::pair<Point,NT> CheBall;
    
-       // Constructors and destructor
-       VPolytopeCPP();
-       VPolytopeCPP(double *V_np, int n_vertices, int n_variables);
-       ~VPolytopeCPP();
+      // Constructors and destructor
+      VPolytopeCPP();
+      VPolytopeCPP(double *V_np, int n_vertices, int n_variables);
+      ~VPolytopeCPP();
    
-       Vpolytope VP;
+      Vpolytope VP;
 
-       double compute_volume(char* vol_method, char* walk_method, int walk_len, double epsilon, int seed) const;
+      double compute_volume(char* vol_method, char* walk_method, int walk_len, double epsilon, int seed) const;
    
-       // Sampling method (not implemented here; will throw an exception).
-       double apply_sampling(int walk_len, int number_of_points, int number_of_points_to_burn,
+      // Sampling method (not implemented here; will throw an exception).
+      double apply_sampling(int walk_len, int number_of_points, int number_of_points_to_burn,
                              char* method, double* inner_point, double radius, double* samples,
                              double variance_value, double* bias_vector, int ess);
 };
